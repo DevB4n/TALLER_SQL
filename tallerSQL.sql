@@ -1,3 +1,4 @@
+-- Active: 1749038088780@@127.0.0.1@3320@mysql
 
 CREATE DATABASE db;
 SHOW DATABASES;
@@ -829,3 +830,43 @@ FROM(
 ) AS usuarios
 WHERE fecha_registro > NOW() - INTERVAL 1 YEAR;
 
+--19
+SELECT *
+FROM(
+  SELECT usuarios.nombre AS nombre_empleado,COUNT(pedidos.pedido_id) AS cantidad_pedidos_gestionados
+  FROM usuarios
+  JOIN empleados ON usuarios.usuario_id = empleados.empleado_id
+  JOIN pedidos ON empleados.empleado_id = pedidos.empleado_id
+  GROUP BY nombre_empleado
+) AS empleados
+ORDER BY cantidad_pedidos_gestionados DESC
+LIMIT 1;
+
+--20
+SELECT productos.nombre, detalles_pedidos.cantidad, promedio_compra
+FROM detalles_pedidos
+JOIN productos ON  detalles_pedidos.producto_id = productos.producto_id
+CROSS JOIN(
+  SELECT AVG(cantidad) AS promedio_compra
+  FROM detalles_pedidos
+) AS promedio_compra
+WHERE detalles_pedidos.cantidad > promedio_compra
+ORDER BY cantidad DESC
+;
+
+--21
+SELECT proveedores.nombre,COUNT(proveedores_productos.producto_id) AS cantidad,promedio
+FROM proveedores
+JOIN proveedores_productos ON proveedores.proveedor_id = proveedores_productos.proveedor_id
+CROSS JOIN(
+  SELECT AVG(cantidad_productos) AS promedio
+  FROM(
+    SELECT proveedor_id, COUNT(producto_id) AS cantidad_productos
+    FROM proveedores_productos
+    GROUP BY proveedor_id
+  ) AS contador_proveedor
+) AS promedio_por_proveedor
+GROUP BY proveedores.nombre,promedio
+HAVING cantidad > promedio;
+
+--22
